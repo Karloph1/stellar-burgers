@@ -1,25 +1,48 @@
-import { FC, useMemo } from 'react';
+import { FC, useMemo, useEffect } from 'react';
 import { Preloader } from '../ui/preloader';
 import { OrderInfoUI } from '../ui/order-info';
-import { TIngredient } from '@utils-types';
+import { TIngredient, TOrdersData, TOrder } from '@utils-types';
+import { useDispatch, useSelector } from '../../services/store';
+import { fetchOrders } from '../../services//slices/ordersSlice';
+import { useParams } from 'react-router-dom';
+import { fetchIngredients } from '../../services/slices/ingredientsSlice';
 
 export const OrderInfo: FC = () => {
+  const dispatch = useDispatch();
+
+  const { data: orders } = useSelector((state) => state.orders);
+  const ingredients: TIngredient[] | null = useSelector(
+    (state) => state.ingredients.data
+  );
+
+  const { number } = useParams<{ number: string }>();
+
+  useEffect(() => {
+    if (!orders) {
+      dispatch(fetchOrders());
+    }
+
+    if (!ingredients) {
+      dispatch(fetchIngredients());
+    }
+  }, [dispatch, orders, ingredients]);
+
+  const order = orders?.orders.find((x) => x.number.toString() === number);
+
   /** TODO: взять переменные orderData и ingredients из стора */
   const orderData = {
-    createdAt: '',
-    ingredients: [],
-    _id: '',
-    status: '',
-    name: '',
-    updatedAt: 'string',
-    number: 0
+    createdAt: order ? order.createdAt : '',
+    ingredients: order ? order.ingredients : [],
+    _id: order ? order._id : '',
+    status: order ? order.status : '',
+    name: order ? order.name : '',
+    updatedAt: order ? order.updatedAt : '',
+    number: orders ? orders.totalToday : 0
   };
-
-  const ingredients: TIngredient[] = [];
 
   /* Готовим данные для отображения */
   const orderInfo = useMemo(() => {
-    if (!orderData || !ingredients.length) return null;
+    if (!orderData || !ingredients?.length) return null;
 
     const date = new Date(orderData.createdAt);
 
