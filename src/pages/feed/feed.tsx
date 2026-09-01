@@ -2,14 +2,14 @@ import { Preloader } from '@ui';
 import { FeedUI } from '@ui-pages';
 import { TOrder } from '@utils-types';
 import { useDispatch, useSelector } from '../../services/store';
-import { fetchFeeds } from '../../services//slices/feedSlice';
+import { fetchFeeds } from '../../services/slices/feedSlice';
 import { FC, useEffect } from 'react';
 
 export const Feed: FC = () => {
   /** TODO: взять переменную из стора */
   const dispatch = useDispatch();
 
-  const { data: feeds, loading, error } = useSelector((state) => state.feeds);
+  const { data: feeds } = useSelector((state) => state.feeds);
 
   useEffect(() => {
     if (!feeds) {
@@ -19,9 +19,13 @@ export const Feed: FC = () => {
 
   const orders: TOrder[] = feeds !== null ? feeds.orders : [];
 
+  const handleGetFeeds = () => {
+    dispatch(fetchFeeds());
+  };
+
   if (!orders.length) {
     return <Preloader />;
   }
 
-  <FeedUI orders={orders} handleGetFeeds={() => {}} />;
+  return <FeedUI orders={orders} handleGetFeeds={handleGetFeeds} />;
 };

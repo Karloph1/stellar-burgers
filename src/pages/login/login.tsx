@@ -20,7 +20,6 @@ export const Login: FC = () => {
     try {
       const resultAction = await dispatch(loginUser(loginData));
       if (loginUser.fulfilled.match(resultAction)) {
-        console.log('Вход выполнен, пользователь:', resultAction.payload);
         navigate('/profile', { replace: true });
       } else {
         console.error('Ошибка входа:', resultAction.payload);

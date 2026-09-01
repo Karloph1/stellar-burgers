@@ -1,7 +1,11 @@
 import { FC, useMemo } from 'react';
 import { TConstructorIngredient } from '@utils-types';
 import { useDispatch, useSelector } from '../../services/store';
-import { closeOrder, createOrder } from '../../services/slices/burgerSlice';
+import {
+  closeOrder,
+  createOrder,
+  clearOrder
+} from '../../services/slices/burgerSlice';
 import { BurgerConstructorUI } from '../ui/burger-constructor';
 import { addOrder } from '../../services/slices/ordersSlice';
 import { useNavigate } from 'react-router-dom';
@@ -49,12 +53,14 @@ export const BurgerConstructor: FC = () => {
       if (burger_constructor) {
         const fullOrder: string[] = [
           burger_constructor.bun?._id,
-          ...(burger_constructor.ingredients?.map((x) => x._id) ?? [])
+          ...(burger_constructor.ingredients?.map((x) => x._id) ?? []),
+          burger_constructor.bun?._id
         ].filter((item): item is string => item !== undefined);
 
         try {
           const order = await dispatch(createOrder(fullOrder)).unwrap();
           dispatch(addOrder(order));
+          dispatch(clearOrder());
         } catch (error) {
           console.error('Ошибка при оформлении заказа:', error);
         }
