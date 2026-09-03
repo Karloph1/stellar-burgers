@@ -10,6 +10,7 @@ export const Modal: FC<TModalProps> = memo(({ title, onClose, children }) => {
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       e.key === 'Escape' && onClose();
+      console.log('1');
     };
 
     document.addEventListener('keydown', handleEsc);
