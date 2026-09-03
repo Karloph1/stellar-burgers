@@ -19,9 +19,7 @@ export const Login: FC = () => {
 
     try {
       const resultAction = await dispatch(loginUser(loginData));
-      if (loginUser.fulfilled.match(resultAction)) {
-        navigate('/profile', { replace: true });
-      } else {
+      if (!loginUser.fulfilled.match(resultAction)) {
         console.error('Ошибка входа:', resultAction.payload);
         errorText = 'Неверный логин или пароль';
       }

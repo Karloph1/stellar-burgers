@@ -75,7 +75,7 @@ const App = () => {
             <Route
               path='/login'
               element={
-                <ProtectedRoute onlyUnAuth={false}>
+                <ProtectedRoute onlyUnAuth>
                   <Login />
                 </ProtectedRoute>
               }
@@ -83,7 +83,7 @@ const App = () => {
             <Route
               path='/register'
               element={
-                <ProtectedRoute onlyUnAuth={false}>
+                <ProtectedRoute onlyUnAuth>
                   <Register />
                 </ProtectedRoute>
               }
@@ -91,7 +91,7 @@ const App = () => {
             <Route
               path='/forgot-password'
               element={
-                <ProtectedRoute onlyUnAuth={false}>
+                <ProtectedRoute onlyUnAuth>
                   <ForgotPassword />
                 </ProtectedRoute>
               }
@@ -99,7 +99,7 @@ const App = () => {
             <Route
               path='/reset-password'
               element={
-                <ProtectedRoute onlyUnAuth={false}>
+                <ProtectedRoute onlyUnAuth>
                   <ResetPassword />
                 </ProtectedRoute>
               }
@@ -107,7 +107,7 @@ const App = () => {
             <Route
               path='/profile'
               element={
-                <ProtectedRoute onlyUnAuth>
+                <ProtectedRoute onlyUnAuth={false}>
                   <Profile />
                 </ProtectedRoute>
               }
@@ -115,7 +115,7 @@ const App = () => {
             <Route
               path='/profile/orders'
               element={
-                <ProtectedRoute onlyUnAuth>
+                <ProtectedRoute onlyUnAuth={false}>
                   <ProfileOrders />
                 </ProtectedRoute>
               }
@@ -124,7 +124,7 @@ const App = () => {
             <Route
               path='/feed/:number'
               element={
-                <ProtectedRoute onlyUnAuth>
+                <ProtectedRoute onlyUnAuth={false}>
                   <OrderInfo />
                 </ProtectedRoute>
               }
@@ -133,7 +133,7 @@ const App = () => {
             <Route
               path='/profile/orders/:number'
               element={
-                <ProtectedRoute onlyUnAuth>
+                <ProtectedRoute onlyUnAuth={false}>
                   <OrderInfo />
                 </ProtectedRoute>
               }
@@ -160,9 +160,11 @@ const App = () => {
               <Route
                 path='/profile/orders/:number'
                 element={
-                  <Modal title='Информация о заказе' onClose={onClose}>
-                    <OrderInfo />
-                  </Modal>
+                  <ProtectedRoute onlyUnAuth={false}>
+                    <Modal title='Информация о заказе' onClose={onClose}>
+                      <OrderInfo />
+                    </Modal>
+                  </ProtectedRoute>
                 }
               />
             </Routes>

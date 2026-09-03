@@ -3,23 +3,35 @@ import { Preloader } from '../ui/preloader';
 import { OrderInfoUI } from '../ui/order-info';
 import { TIngredient, TOrdersData, TOrder } from '@utils-types';
 import { useDispatch, useSelector } from '../../services/store';
-import { fetchOrders } from '../../services//slices/ordersSlice';
+import {
+  clearCurrentOrder,
+  getOrderByNumber
+} from '../../services//slices/ordersSlice';
 import { useParams } from 'react-router-dom';
 import { fetchIngredients } from '../../services/slices/ingredientsSlice';
+import { fetchFeeds } from '../../services/slices/feedSlice';
 
 export const OrderInfo: FC = () => {
   const dispatch = useDispatch();
 
-  const { data: orders } = useSelector((state) => state.orders);
+  const { data: orders } = useSelector((state) => state.feeds);
   const ingredients: TIngredient[] | null = useSelector(
     (state) => state.ingredients.data
   );
+  const currentOrder = useSelector((state) => state.orders.currentOrder);
 
   const { number } = useParams<{ number: string }>();
 
+  useEffect(
+    () => () => {
+      dispatch(clearCurrentOrder());
+    },
+    [dispatch]
+  );
+
   useEffect(() => {
     if (!orders) {
-      dispatch(fetchOrders());
+      dispatch(fetchFeeds());
     }
 
     if (!ingredients) {
@@ -27,7 +39,17 @@ export const OrderInfo: FC = () => {
     }
   }, [dispatch, orders, ingredients]);
 
-  const order = orders?.orders.find((x) => x.number.toString() === number);
+  const orderFromFeed = orders?.orders?.find(
+    (x) => x.number.toString() === number
+  );
+
+  const order = orderFromFeed || currentOrder;
+
+  useEffect(() => {
+    if (!order) {
+      dispatch(getOrderByNumber(Number(number)));
+    }
+  }, [dispatch, number, order]);
 
   /** TODO: взять переменные orderData и ingredients из стора */
   const orderData = {
