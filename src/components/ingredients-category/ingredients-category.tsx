@@ -1,6 +1,7 @@
 import { forwardRef, useMemo } from 'react';
 import { TIngredientsCategoryProps } from './type';
 import { TIngredient } from '@utils-types';
+import { useSelector } from '../../services/store';
 import { IngredientsCategoryUI } from '../ui/ingredients-category';
 
 export const IngredientsCategory = forwardRef<
@@ -8,11 +9,17 @@ export const IngredientsCategory = forwardRef<
   TIngredientsCategoryProps
 >(({ title, titleRef, ingredients }, ref) => {
   /** TODO: взять переменную из стора */
+  const { data: burger_constructor } = useSelector(
+    (state) => state.burgerConstructor
+  );
+
   const burgerConstructor = {
     bun: {
-      _id: ''
+      _id: burger_constructor
+        ? burger_constructor.ingredients.filter((x) => x.type === 'bun')[0]?._id
+        : 0
     },
-    ingredients: []
+    ingredients: burger_constructor ? burger_constructor.ingredients : []
   };
 
   const ingredientsCounters = useMemo(() => {

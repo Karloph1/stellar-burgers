@@ -1,25 +1,70 @@
-import { FC, useMemo } from 'react';
+import { FC, useMemo, useEffect } from 'react';
 import { Preloader } from '../ui/preloader';
 import { OrderInfoUI } from '../ui/order-info';
-import { TIngredient } from '@utils-types';
+import { TIngredient, TOrdersData, TOrder } from '@utils-types';
+import { useDispatch, useSelector } from '../../services/store';
+import {
+  clearCurrentOrder,
+  getOrderByNumber
+} from '../../services//slices/ordersSlice';
+import { useParams } from 'react-router-dom';
+import { fetchIngredients } from '../../services/slices/ingredientsSlice';
+import { fetchFeeds } from '../../services/slices/feedSlice';
 
 export const OrderInfo: FC = () => {
+  const dispatch = useDispatch();
+
+  const { data: orders } = useSelector((state) => state.feeds);
+  const ingredients: TIngredient[] | null = useSelector(
+    (state) => state.ingredients.data
+  );
+  const currentOrder = useSelector((state) => state.orders.currentOrder);
+
+  const { number } = useParams<{ number: string }>();
+
+  useEffect(
+    () => () => {
+      dispatch(clearCurrentOrder());
+    },
+    [dispatch]
+  );
+
+  useEffect(() => {
+    if (!orders) {
+      dispatch(fetchFeeds());
+    }
+
+    if (!ingredients) {
+      dispatch(fetchIngredients());
+    }
+  }, [dispatch, orders, ingredients]);
+
+  const orderFromFeed = orders?.orders?.find(
+    (x) => x.number.toString() === number
+  );
+
+  const order = orderFromFeed || currentOrder;
+
+  useEffect(() => {
+    if (!order) {
+      dispatch(getOrderByNumber(Number(number)));
+    }
+  }, [dispatch, number, order]);
+
   /** TODO: взять переменные orderData и ingredients из стора */
   const orderData = {
-    createdAt: '',
-    ingredients: [],
-    _id: '',
-    status: '',
-    name: '',
-    updatedAt: 'string',
-    number: 0
+    createdAt: order ? order.createdAt : '',
+    ingredients: order ? order.ingredients : [],
+    _id: order ? order._id : '',
+    status: order ? order.status : '',
+    name: order ? order.name : '',
+    updatedAt: order ? order.updatedAt : '',
+    number: orders ? orders.totalToday : 0
   };
-
-  const ingredients: TIngredient[] = [];
 
   /* Готовим данные для отображения */
   const orderInfo = useMemo(() => {
-    if (!orderData || !ingredients.length) return null;
+    if (!orderData || !ingredients?.length) return null;
 
     const date = new Date(orderData.createdAt);
 
