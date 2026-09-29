@@ -69,42 +69,42 @@ describe('IngredientsSlice tests', () => {
     expect(result.error).toBeNull();
   });
 
-  test('fetch ingredients fulfilled', async () => {
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            data: initialIngredients
-          })
-      })
-    ) as jest.Mock;
+  test('fetch ingredients fulfilled', () => {
+    const initialState = {
+      data: [],
+      loading: true,
+      error: null
+    };
 
-    const dispatch = jest.fn();
-    const result = await fetchIngredients()(dispatch, jest.fn(), undefined);
+    const action = fetchIngredients.fulfilled(
+      initialIngredients,
+      'test-request-id'
+    );
+    const result = ingredientsReducer(initialState, action);
 
-    expect(result.type).toBe('ingredients/fetchIngredients/fulfilled');
-    expect(result.payload).toEqual(initialIngredients);
+    expect(result.data).toEqual(initialIngredients);
+    expect(result.loading).toBe(false);
+    expect(result.error).toBeNull();
   });
 
-  test('fetch ingredients rejected', async () => {
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: false,
-            data: []
-          })
-      })
-    ) as jest.Mock;
+  test('fetch ingredients rejected', () => {
+    const initialState = {
+      data: [],
+      loading: true,
+      error: null
+    };
 
-    const dispatch = jest.fn();
-    const result = await fetchIngredients()(dispatch, jest.fn(), undefined);
+    const action = fetchIngredients.rejected(
+      null,
+      'test-request-id',
+      undefined,
+      'Ошибка загрузки ингредиентов'
+    );
+    const result = ingredientsReducer(initialState, action);
 
-    expect(result.type).toBe('ingredients/fetchIngredients/rejected');
-    expect(result.payload).toBe('Ошибка загрузки ингредиентов');
+    expect(result.loading).toBe(false);
+    expect(result.error).toBe('Ошибка загрузки ингредиентов');
+    expect(result.data).toEqual([]);
   });
 
   test('fetch ingredients pending', () => {
@@ -120,5 +120,15 @@ describe('IngredientsSlice tests', () => {
 
     expect(result.loading).toBe(true);
     expect(result.error).toBeNull();
+  });
+
+  test('undefined state', () => {
+    const result = ingredientsReducer(undefined, { type: '@@INIT' });
+
+    expect(result).toEqual({
+      data: null,
+      loading: false,
+      error: null
+    });
   });
 });

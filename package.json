@@ -94,7 +94,17 @@
     "lint:fix": "npm run lint -- --fix",
     "format": "prettier ./src --write",
     "test": "jest",
-    "test-ct": "playwright test -c playwright-ct.config.ts"
+    "test-ct": "playwright test -c playwright.config.ts",
+    "test:watch": "jest --watch"
+  },
+  "jest": {
+    "testMatch": [
+      "**/*.test.[jt]s?(x)"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/tests/e2e/"
+    ]
   },
   "eslintConfig": {
     "extends": [

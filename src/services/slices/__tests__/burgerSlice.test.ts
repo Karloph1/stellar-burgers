@@ -199,7 +199,7 @@ describe('BurgerSlice tests', () => {
       initialIngredients.length - 1
     );
     expect(
-      result.data?.ingredients.some((item) => item.id === 'test-id-0')
+      result.data?.ingredients.some((item) => item.id === ingredientWithId.id)
     ).toBe(false);
     expect(result.error).toBeNull();
   });
@@ -288,40 +288,22 @@ describe('BurgerSlice tests', () => {
     expect(result.data).toBeNull();
   });
 
-  test('create order fulfilled', async () => {
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            order: {
-              _id: '0',
-              status: 'ready',
-              name: 'order',
-              owner: 'Vova',
-              createdAt: '20-09-2026',
-              updatedAt: '24-09-2026',
-              number: 1,
-              price: 1230
-            },
-            name: 'order'
-          })
-      })
-    ) as jest.Mock;
+  test('create order fulfilled', () => {
+    const initialState = {
+      data: {
+        ingredients: initialIngredients,
+        bun: initialBun,
+        order: initialOrder
+      },
+      orderRequest: true,
+      orderModalData: null,
+      loading: true,
+      error: null
+    };
 
-    const dispatch = jest.fn();
     const ingredients = ['ingredient1', 'ingredient2'];
 
-    const result = await createOrder(ingredients)(
-      dispatch,
-      jest.fn(),
-      undefined
-    );
-
-    expect(result.type).toBe('burger_constructor/sendOrder/fulfilled');
-
-    expect(result.payload).toEqual({
+    const orderPayload = {
       _id: '0',
       status: 'ready',
       name: 'order',
@@ -329,43 +311,47 @@ describe('BurgerSlice tests', () => {
       updatedAt: '24-09-2026',
       number: 1,
       ingredients
-    });
+    };
+
+    const action = createOrder.fulfilled(
+      orderPayload,
+      'test-request-id',
+      ingredients
+    );
+    const result = burgerReducer(initialState, action);
+
+    expect(result.loading).toBe(false);
+    expect(result.orderRequest).toBe(false);
+    expect(result.error).toBeNull();
+    expect(result.orderModalData).toEqual(orderPayload);
   });
 
-  test('create order rejected', async () => {
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            success: false,
-            order: {
-              _id: '0',
-              status: 'ready',
-              name: 'order',
-              owner: 'Vova',
-              createdAt: '20-09-2026',
-              updatedAt: '24-09-2026',
-              number: 1,
-              price: 1230
-            },
-            name: 'order'
-          })
-      })
-    ) as jest.Mock;
+  test('create order rejected', () => {
+    const initialState = {
+      data: {
+        ingredients: initialIngredients,
+        bun: initialBun,
+        order: initialOrder
+      },
+      orderRequest: true,
+      orderModalData: null,
+      loading: true,
+      error: null
+    };
 
-    const dispatch = jest.fn();
     const ingredients = ['ingredient1', 'ingredient2'];
 
-    const result = await createOrder(ingredients)(
-      dispatch,
-      jest.fn(),
+    const action = createOrder.rejected(
+      null,
+      'test-request-id',
+      ingredients,
       undefined
     );
+    const result = burgerReducer(initialState, action);
 
-    expect(result.type).toBe('burger_constructor/sendOrder/rejected');
-
-    expect(result.payload).toBe(undefined);
+    expect(result.loading).toBe(false);
+    expect(result.orderRequest).toBe(false);
+    expect(result.error).not.toBeNull();
   });
 
   test('create order pending', async () => {
@@ -387,5 +373,17 @@ describe('BurgerSlice tests', () => {
 
     expect(result.loading).toBe(true);
     expect(result.error).toBeNull();
+  });
+
+  test('undefined state', () => {
+    const result = burgerReducer(undefined, { type: '@@INIT' });
+
+    expect(result).toEqual({
+      data: null,
+      error: null,
+      loading: false,
+      orderModalData: null,
+      orderRequest: false
+    });
   });
 });

@@ -1,22 +1,44 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Список ингридиентов с HAR', () => {
-  test('должен записать HAR-файл списка ингридиентов', async ({ page }) => {
-    await page.routeFromHAR('./tests/hars/ingredients/ingredients.har', {
-      url: '**/ingredients',
-      update: false
+  test.beforeEach(async ({ context, page }) => {
+    await page.routeFromHAR('./tests/hars/user/user.har', {
+      url: '**/auth/user'
     });
 
+    await page.routeFromHAR('./tests/hars/ingredients/ingredients.har', {
+      url: '**/ingredients'
+    });
+
+    await page.routeFromHAR('./tests/hars/order/order.har', {
+      url: '**/orders'
+    });
+
+    await context.addCookies([
+      {
+        name: 'accessToken',
+        value:
+          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhYmIzMmY1NmExNzJkMDAxYjk5NjBiOSIsImlhdCI6MTc5MDY2MjI5NywiZXhwIjoxNzkwNjYzNDk3fQ.57EatiksR7QYXhONHH5PGPfxvryk3EKN3lGPUAnF-bo',
+        domain: 'localhost',
+        path: '/'
+      }
+    ]);
+
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'RefreshToken',
+        '9ad6def6eb7ce7040ee58499bee3670a2d7b0b97388330880eb7d1abb3f5db65100243629c6dbb3f'
+      );
+    });
+  });
+
+  test('должен записать HAR-файл списка ингридиентов', async ({ page }) => {
     await page.goto('/');
 
     await expect(page.getByTestId('ingredients-list')).toBeVisible();
   });
 
   test('добавление начинки в конструктор', async ({ page }) => {
-    await page.routeFromHAR('./tests/hars/ingredients/ingredients.har', {
-      url: '**/ingredients'
-    });
-
     const responsePromise = page.waitForResponse(
       (response) =>
         response.url().endsWith('/ingredients') &&
@@ -40,10 +62,6 @@ test.describe('Список ингридиентов с HAR', () => {
   });
 
   test('добавление булки в конструктор', async ({ page }) => {
-    await page.routeFromHAR('./tests/hars/ingredients/ingredients.har', {
-      url: '**/ingredients'
-    });
-
     const responsePromise = page.waitForResponse(
       (response) =>
         response.url().endsWith('/ingredients') &&
@@ -63,13 +81,20 @@ test.describe('Список ингридиентов с HAR', () => {
 
     await expect(page.getByTestId('bun-top')).toBeVisible();
     await expect(page.getByTestId('bun-bottom')).toBeVisible();
+
+    const bunTop = page.getByTestId('bun-top');
+    const textTop = await bunTop.textContent();
+    const bunBottom = page.getByTestId('bun-bottom');
+    const textBottom = await bunBottom.textContent();
+    const testTop = body.data[0].name + ' (верх)' + String(body.data[0].price);
+    const testBottom =
+      body.data[0].name + ' (низ)' + String(body.data[0].price);
+
+    expect(testTop).toBe(textTop);
+    expect(testBottom).toBe(textBottom);
   });
 
   test('добавление булки и начинки в конструктор', async ({ page }) => {
-    await page.routeFromHAR('./tests/hars/ingredients/ingredients.har', {
-      url: '**/ingredients'
-    });
-
     const responseGetPromise = page.waitForResponse(
       (response) =>
         response.url().endsWith('/ingredients') &&
@@ -97,10 +122,6 @@ test.describe('Список ингридиентов с HAR', () => {
   });
 
   test('открытие модального окна', async ({ page }) => {
-    await page.routeFromHAR('./tests/hars/ingredients/ingredients.har', {
-      url: '**/ingredients'
-    });
-
     const responsePromise = page.waitForResponse(
       (response) =>
         response.url().endsWith('/ingredients') &&
@@ -112,19 +133,30 @@ test.describe('Список ингридиентов с HAR', () => {
     const response = await responsePromise;
     const body = await response.json();
 
-    const ingredientId = body.data[0]._id;
+    const { _id, name, calories, proteins, fat, carbohydrates, image_large } =
+      body.data[0];
 
-    const ingredient = page.getByTestId(`ingredient-${ingredientId}`);
+    const ingredient = page.getByTestId(`ingredient-${_id}`);
 
     await ingredient.click();
     await expect(page.getByTestId('modal')).toBeVisible();
+
+    await expect(page.getByTestId('ingredient-detail-name')).toHaveText(name);
+    await expect(page.getByTestId('ingredient-detail-calories')).toHaveText(
+      String(calories)
+    );
+    await expect(page.getByTestId('ingredient-detail-proteins')).toHaveText(
+      String(proteins)
+    );
+    await expect(page.getByTestId('ingredient-detail-fat')).toHaveText(
+      String(fat)
+    );
+    await expect(
+      page.getByTestId('ingredient-detail-carbohydrates')
+    ).toHaveText(String(carbohydrates));
   });
 
   test('закрытие модального окна по крестику', async ({ page }) => {
-    await page.routeFromHAR('./tests/hars/ingredients/ingredients.har', {
-      url: '**/ingredients'
-    });
-
     const responsePromise = page.waitForResponse(
       (response) =>
         response.url().endsWith('/ingredients') &&
@@ -150,10 +182,6 @@ test.describe('Список ингридиентов с HAR', () => {
   });
 
   test('закрытие модального окна по оверлею', async ({ page }) => {
-    await page.routeFromHAR('./tests/hars/ingredients/ingredients.har', {
-      url: '**/ingredients'
-    });
-
     const responsePromise = page.waitForResponse(
       (response) =>
         response.url().endsWith('/ingredients') &&
@@ -180,57 +208,15 @@ test.describe('Список ингридиентов с HAR', () => {
     await expect(page.getByTestId('modal')).not.toBeVisible();
   });
 
-  test('должен записать HAR-файл данных пользователя', async ({
-    context,
-    page
-  }) => {
-    await context.addCookies([
-      {
-        name: 'accessToken',
-        value:
-          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhYmIzMmY1NmExNzJkMDAxYjk5NjBiOSIsImlhdCI6MTc5MDY2MjI5NywiZXhwIjoxNzkwNjYzNDk3fQ.57EatiksR7QYXhONHH5PGPfxvryk3EKN3lGPUAnF-bo',
-        domain: 'localhost',
-        path: '/'
-      }
-    ]);
-
-    await page.routeFromHAR('./tests/hars/user/user.har', {
-      url: '**/auth/user',
-      update: false
-    });
-
+  test('должен записать HAR-файл данных пользователя', async ({ page }) => {
     await page.goto('/');
 
     await expect(page.getByTestId('ingredients-list')).toBeVisible();
   });
 
   test('должен записать HAR-файл данных созданного заказа', async ({
-    context,
     page
   }) => {
-    await context.addCookies([
-      {
-        name: 'accessToken',
-        value:
-          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhYmIzMmY1NmExNzJkMDAxYjk5NjBiOSIsImlhdCI6MTc5MDY2MjI5NywiZXhwIjoxNzkwNjYzNDk3fQ.57EatiksR7QYXhONHH5PGPfxvryk3EKN3lGPUAnF-bo',
-        domain: 'localhost',
-        path: '/'
-      }
-    ]);
-
-    await page.routeFromHAR('./tests/hars/user/user.har', {
-      url: '**/auth/user'
-    });
-
-    await page.routeFromHAR('./tests/hars/ingredients/ingredients.har', {
-      url: '**/ingredients'
-    });
-
-    await page.routeFromHAR('./tests/hars/order/order.har', {
-      url: '**/orders',
-      update: false
-    });
-
     const responseGetPromise = page.waitForResponse(
       (response) =>
         response.url().endsWith('/ingredients') &&
@@ -266,31 +252,7 @@ test.describe('Список ингридиентов с HAR', () => {
     expect(bodyPost.success).toBe(true);
   });
 
-  test('открытие модального окна оформление заказа', async ({
-    context,
-    page
-  }) => {
-    await context.addCookies([
-      {
-        name: 'accessToken',
-        value:
-          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhYmIzMmY1NmExNzJkMDAxYjk5NjBiOSIsImlhdCI6MTc5MDY2MjI5NywiZXhwIjoxNzkwNjYzNDk3fQ.57EatiksR7QYXhONHH5PGPfxvryk3EKN3lGPUAnF-bo',
-        domain: 'localhost',
-        path: '/'
-      }
-    ]);
-    await page.routeFromHAR('./tests/hars/user/user.har', {
-      url: '**/auth/user'
-    });
-
-    await page.routeFromHAR('./tests/hars/ingredients/ingredients.har', {
-      url: '**/ingredients'
-    });
-
-    await page.routeFromHAR('./tests/hars/order/order.har', {
-      url: '**/orders'
-    });
-
+  test('открытие модального окна оформление заказа', async ({ page }) => {
     const responseGetPromise = page.waitForResponse(
       (response) =>
         response.url().endsWith('/ingredients') &&
@@ -320,34 +282,12 @@ test.describe('Список ингридиентов с HAR', () => {
     const bodyPost = await responsePost.json();
 
     await expect(page.getByTestId('modal')).toBeVisible();
-    expect(bodyPost.order.number).toEqual(110756);
+    await expect(page.getByTestId('order-number')).toHaveText(
+      String(bodyPost.order.number)
+    );
   });
 
-  test('закрытие модального окна после оформления заказа', async ({
-    context,
-    page
-  }) => {
-    await context.addCookies([
-      {
-        name: 'accessToken',
-        value:
-          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhYmIzMmY1NmExNzJkMDAxYjk5NjBiOSIsImlhdCI6MTc5MDY2MjI5NywiZXhwIjoxNzkwNjYzNDk3fQ.57EatiksR7QYXhONHH5PGPfxvryk3EKN3lGPUAnF-bo',
-        domain: 'localhost',
-        path: '/'
-      }
-    ]);
-    await page.routeFromHAR('./tests/hars/user/user.har', {
-      url: '**/auth/user'
-    });
-
-    await page.routeFromHAR('./tests/hars/ingredients/ingredients.har', {
-      url: '**/ingredients'
-    });
-
-    await page.routeFromHAR('./tests/hars/order/order.har', {
-      url: '**/orders'
-    });
-
+  test('закрытие модального окна после оформления заказа', async ({ page }) => {
     const responseGetPromise = page.waitForResponse(
       (response) =>
         response.url().endsWith('/ingredients') &&
@@ -380,30 +320,8 @@ test.describe('Список ингридиентов с HAR', () => {
   });
 
   test('очистка конструктора бургера после оформления заказа', async ({
-    context,
     page
   }) => {
-    await context.addCookies([
-      {
-        name: 'accessToken',
-        value:
-          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhYmIzMmY1NmExNzJkMDAxYjk5NjBiOSIsImlhdCI6MTc5MDY2MjI5NywiZXhwIjoxNzkwNjYzNDk3fQ.57EatiksR7QYXhONHH5PGPfxvryk3EKN3lGPUAnF-bo',
-        domain: 'localhost',
-        path: '/'
-      }
-    ]);
-    await page.routeFromHAR('./tests/hars/user/user.har', {
-      url: '**/auth/user'
-    });
-
-    await page.routeFromHAR('./tests/hars/ingredients/ingredients.har', {
-      url: '**/ingredients'
-    });
-
-    await page.routeFromHAR('./tests/hars/order/order.har', {
-      url: '**/orders'
-    });
-
     const responseGetPromise = page.waitForResponse(
       (response) =>
         response.url().endsWith('/ingredients') &&
