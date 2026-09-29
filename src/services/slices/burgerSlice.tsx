@@ -55,6 +55,8 @@ const burgerConstructorSlice = createSlice({
     },
     clearBurgerConstructor: (state) => {
       state.data = null;
+      state.orderRequest = false;
+      state.orderModalData = null;
       state.error = null;
     },
     addIngredient: {
@@ -144,6 +146,7 @@ const burgerConstructorSlice = createSlice({
     builder
       .addCase(createOrder.pending, (state) => {
         state.orderRequest = true;
+        state.loading = true;
         state.orderModalData = null;
         state.error = null;
       })
